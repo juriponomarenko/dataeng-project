@@ -8,7 +8,6 @@ from airflow.operators.bash_operator import BashOperator
 from airflow.operators.python_operator import PythonOperator, BranchPythonOperator
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.operators.postgres_operator import PostgresOperator
-from airflow.providers.postgres.hooks.postgres import PostgresHook
 
 sys.path.append('/opt/airflow/dags/util/kym_cleaning')
 sys.path.append('/opt/airflow/dags/util/kym_spotlight_cleaning')
@@ -55,6 +54,43 @@ def _enrichment():
     df_all[['DBPedia_resources_n']] = df_all[['DBPedia_resources_n']].astype('int')
 
     df_all.to_csv("/opt/airflow/dags/data/kym_vs.csv", index=False)
+
+
+def _persist_data():
+    df = pd.read_csv('/opt/airflow/dags/data/kym_vs.csv')
+    with open("/opt/airflow/dags/data/ingestion_query.sql", "w") as f:
+        rows = df.iterrows()
+
+        for index, row in rows:
+            title = row['title']
+            url = row['url']
+            description = row['description']
+            children_count = row['children_n']
+            tags_count = row['tags_n']
+            date_added = row['year_added']
+
+            adult = row['adult']
+            spoof = row['spoof']
+            medical = row['medical']
+            violence = row['violence']
+            racy = row['racy']
+
+            parent = row['parent']
+            origin = row['origin']
+            keywords_arr = row['search_keywords']
+            tags = row['tags']
+            children = row['children']
+
+            label = row['label']
+
+
+            f.write(
+                "INSERT INTO meme_fact VALUES ("
+                f"'{title}', '{year_added}', {tags_n}, '{parent}', {siblings_n}, {children_n}, {description_n}, '{origin}', '{year}', '{adult}', '{spoof}', '{medical}', '{violence}', '{racy}', '{label}', {resources_n}"
+                ");\n"
+            )
+
+        f.close()
 
 
 connection = BranchPythonOperator(
@@ -139,8 +175,8 @@ enrichment = PythonOperator(
     depends_on_past=False,
     )
 
-prepare_sql_database = PostgresOperator(
-    task_id='prepare_sql_database',
+prepare_sql_schema = PostgresOperator(
+    task_id='prepare_sql_schema',
     dag=project_dag,
     postgres_conn_id='postgres_default',
     sql='data/schema.sql',
@@ -148,15 +184,14 @@ prepare_sql_database = PostgresOperator(
     autocommit=True,
 )
 
-# ingestion_query = PythonOperator(
-#     task_id='ingestion_query',
-#     dag=project_dag,
-#     python_callable=_ingestion_query,
-#     op_kwargs={
-#     },
-#     trigger_rule='all_success',
-# #    depends_on_past=False,
-# )
+ingestion_query = PythonOperator(
+    task_id='ingestion_query',
+    dag=project_dag,
+    python_callable=_persist_data,
+    op_kwargs={},
+    trigger_rule='all_success',
+#    depends_on_past=False,
+)
 
 #-------------------------------------------
 # def _ingestion_query():
@@ -272,7 +307,7 @@ end = DummyOperator(
 )
 
 
-connection >> [report, data_dir]
+connection >> [report, data_dir, prepare_sql_schema]
 
 report >> end
 
@@ -284,4 +319,4 @@ download_kym >> clean_kym
 
 download_kym_vision >> clean_kym_vision
 
-[clean_kym_spotlight, clean_kym,clean_kym_vision] >> enrichment >> prepare_sql_database
+[clean_kym_spotlight, clean_kym, clean_kym_vision] >> enrichment

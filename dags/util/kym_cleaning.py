@@ -43,7 +43,7 @@ def clean():
     df = df.reset_index(drop = True)
 
     #get necessary columns
-    df = df[['title','year_added','meta','details', 'tags', 'parent', 'siblings','children']]
+    df = df[['title', 'url', 'search_keywords', 'year_added','meta','details', 'tags', 'parent', 'siblings','children']]
 
     #get description from "meta"
     descs = []
@@ -98,5 +98,5 @@ def clean():
 
     #finalise
     df_final = df.drop(['meta', 'details'],axis=1)
-    df_final=df_final[['title','year_added','tags','tags_n','parent','siblings','siblings_n','children','children_n','description','description_n','origin','year']]
+    df_final=df_final[['title', 'url', 'search_keywords', 'year_added','tags','tags_n','parent','siblings','siblings_n','children','children_n','description','description_n','origin','year']]
     df_final.to_csv("/opt/airflow/dags/data/kym_cleaned.csv",index=False)
