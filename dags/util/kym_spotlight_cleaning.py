@@ -1,38 +1,40 @@
 import pandas as pd
 import numpy as np
 
-df = pd.read_json('/opt/airflow/dags/util/data/kym_spotlight.json')
-df=df.T.reset_index()
+def clean():
 
-#we consider only "resources"
-df=df[['index','Resources']].rename(columns={'index' : 'title'})
+    df = pd.read_json('/opt/airflow/dags/data/kym_spotlight.json')
+    df=df.T.reset_index()
 
-#title as url ending
-df['title']=df.apply(lambda row: row['title'].split('memes/')[1].replace('-',' ').lower(),axis=1)
+    #we consider only "resources"
+    df=df[['index','Resources']].rename(columns={'index' : 'title'})
 
-#Drop if Resources are not present
-ind_res_notna=df['Resources'].notna()
-df=df.loc[ind_res_notna]
+    #title as url ending
+    df['title']=df.apply(lambda row: row['title'].split('memes/')[1].replace('-',' ').lower(),axis=1)
 
-#drop duplicates
-df = df.drop_duplicates(["title"])
+    #Drop if Resources are not present
+    ind_res_notna=df['Resources'].notna()
+    df=df.loc[ind_res_notna]
 
-#collect DBPedia resources URI endings if similarityScore is high
-resur = []
+    #drop duplicates
+    df = df.drop_duplicates(["title"])
 
-for res in df['Resources']:
-    resr=[]
-    for resi in res:
-        if float(resi['@similarityScore'])>0.99:
-            r = resi['@URI'].split('resource/')[1].replace('-',' ').replace('_',' ').lower()
-            resr.append(r)
-    resur.append(np.unique(np.array(resr)))
+    #collect DBPedia resources URI endings if similarityScore is high
+    resur = []
 
-df['DBPedia_resources']=resur
+    for res in df['Resources']:
+        resr=[]
+        for resi in res:
+            if float(resi['@similarityScore'])>0.99:
+                r = resi['@URI'].split('resource/')[1].replace('-',' ').replace('_',' ').lower()
+                resr.append(r)
+        resur.append(np.unique(np.array(resr)))
 
-#add number of resources
-df['DBPedia_resources_n']=df['DBPedia_resources'].apply(lambda x: len(x))
+    df['DBPedia_resources']=resur
 
-#finalising
-df_final=df.drop(['Resources'],axis=1)
-df_final.to_csv("/opt/airflow/dags/util/data/kym_spotlight_cleaned.csv",index=False)
+    #add number of resources
+    df['DBPedia_resources_n']=df['DBPedia_resources'].apply(lambda x: len(x))
+
+    #finalising
+    df_final=df.drop(['Resources'],axis=1)
+    df_final.to_csv("/opt/airflow/dags/data/kym_spotlight_cleaned.csv",index=False)

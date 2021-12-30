@@ -1,4 +1,5 @@
 import datetime
+import sys
 import urllib.request as request
 import pandas as pd
 
@@ -10,12 +11,18 @@ from airflow.operators.postgres_operator import PostgresOperator
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 
 
+sys.path.append('/opt/airflow/dags/util/kym_cleaning')
+sys.path.append('/opt/airflow/dags/util/kym_spotlight_cleaning')
+sys.path.append('/opt/airflow/dags/util/kym_vision_cleaning')
+
+import util.kym_cleaning as kc
+import util.kym_spotlight_cleaning as ksc
+import util.kym_vision_cleaning as kvc
+
 default_args_dict = {
-    #'start_date': airflow.utils.dates.days_ago(0),
-    'start_date': datetime.datetime(2021, 12, 29, 14, 40, 0),
+    'start_date': datetime.datetime.now(),
     'concurrency': 1,
     'schedule_interval': None,
-    #'schedule_interval': "0 0 * * *",  #runs once a week
     'retries': 1,
     'retry_delay': datetime.timedelta(minutes=5),
 }
@@ -55,63 +62,55 @@ report = DummyOperator(
 data_dir = BashOperator(
     task_id='data_dir',
     dag=project_dag,
-    bash_command="mkdir /opt/airflow/dags/data",
+    bash_command="mkdir -p /opt/airflow/dags/data",
     trigger_rule='all_success',
     depends_on_past=False,
 )
 
-installs = BashOperator(
-    task_id='installs',
-    dag=project_dag,
-    bash_command="pip install ijson pymongo",
-    trigger_rule='all_success',
-    depends_on_past=False,
-)
-
-down_kym = BashOperator(
-    task_id='down_kym',
+download_kym = BashOperator(
+    task_id='download_kym',
     dag=project_dag,
     bash_command="curl -o /opt/airflow/dags/data/kym.json https://owncloud.ut.ee/owncloud/index.php/s/g4qB5DZrFEz2XLm/download/kym.json",
     trigger_rule='all_success',
     depends_on_past=False,
 )
 
-down_s = BashOperator(
-    task_id='down_s',
+download_kym_spotlight = BashOperator(
+    task_id='download_kym_spotlight',
     dag=project_dag,
     bash_command="curl -o /opt/airflow/dags/data/kym_spotlight.json https://owncloud.ut.ee/owncloud/index.php/s/iMM8crN4AKSpFZZ/download/kym_spotlight.json",
     trigger_rule='all_success',
     depends_on_past=False,
 )
 
-down_v = BashOperator(
-    task_id='down_v',
+download_kym_vision = BashOperator(
+    task_id='download_kym_vision',
     dag=project_dag,
     bash_command="curl -o /opt/airflow/dags/data/kym_vision.json https://owncloud.ut.ee/owncloud/index.php/s/teoFdWKBzzqcFjY/download/kym_vision.json",
     trigger_rule='all_success',
     depends_on_past=False,
 )
 
-clean_kym = BashOperator(
+clean_kym = PythonOperator(
     task_id='clean_kym',
     dag=project_dag,
-    bash_command='python /opt/airflow/dags/util/kym_cleaning.py',
+    python_callable=kc.clean,
     trigger_rule='all_success',
     depends_on_past=False,
     )
 
-clean_s = BashOperator(
-    task_id='clean_s',
+clean_kym_spotlight = PythonOperator(
+    task_id='clean_kym_spotlight',
     dag=project_dag,
-    bash_command='python /opt/airflow/dags/util/kym_spotlight_cleaning.py',
+    python_callable=ksc.clean,
     trigger_rule='all_success',
     depends_on_past=False,
     )
 
-clean_v = BashOperator(
-    task_id='clean_v',
+clean_kym_vision = PythonOperator(
+    task_id='clean_kym_vision',
     dag=project_dag,
-    bash_command='python /opt/airflow/dags/util/kym_vision_cleaning.py',
+    python_callable=kvc.clean,
     trigger_rule='all_success',
     depends_on_past=False,
     )
@@ -259,14 +258,14 @@ connection >> [report, data_dir]
 
 report >> end
 
-data_dir >> installs >> [down_s,down_kym,down_v]
+data_dir >> [download_kym_spotlight,download_kym,download_kym_vision]
 
-down_s >> clean_s
+download_kym_spotlight >> clean_kym_spotlight
 
-down_kym >> clean_kym
+download_kym >> clean_kym
 
-down_v >> clean_v
+download_kym_vision >> clean_kym_vision
 
-[clean_s, clean_kym,clean_v] >> enrichment >> ingestion_query >> ingestion_sql
+[clean_kym_spotlight, clean_kym,clean_kym_vision] >> enrichment >> ingestion_query >> ingestion_sql
 
 ingestion_sql >> analysis_sql
