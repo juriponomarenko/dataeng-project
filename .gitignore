@@ -1,1 +1,4 @@
 .idea
+data
+!data/schema.sql
+!data/ingestion_q.sql

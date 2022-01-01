@@ -11,9 +11,10 @@ CREATE TABLE "meme_fact" (
   "title" varchar(255) NOT NULL,
   "url" varchar(255) NOT NULL,
   "label" varchar(255),
-  "description" varchar(255),
+  "description" text,
   "children_count" bigint,
   "tags_count" bigint,
+  "keywords_count" bigint,
   "adult" varchar(255),
   "spoof" varchar(255),
   "medical" varchar(255),
@@ -29,7 +30,7 @@ CREATE TABLE "meme_fact" (
 
 CREATE TABLE "date_dim" (
   "id" BIGSERIAL PRIMARY KEY,
-  "date" Date,
+  "date" Date UNIQUE,
   "month_number" int,
   "month_name" varchar(255),
   "year" int
@@ -37,7 +38,7 @@ CREATE TABLE "date_dim" (
 
 CREATE TABLE "child_dim" (
   "id" BIGSERIAL PRIMARY KEY,
-  "child_link" varchar(255) NOT NULL UNIQUE
+  "text" varchar(255) NOT NULL UNIQUE
 );
 
 CREATE TABLE "tag_dim" (
@@ -47,7 +48,7 @@ CREATE TABLE "tag_dim" (
 
 CREATE TABLE "keyword_dim" (
   "id" BIGSERIAL PRIMARY KEY,
-  "keyword" varchar(255) NOT NULL UNIQUE
+  "text" varchar(255) NOT NULL UNIQUE
 );
 
 CREATE TABLE "origin_dim" (
@@ -84,4 +85,3 @@ CREATE INDEX ixfk__meme_fact__date ON "meme_fact" (date_id ASC);
 CREATE INDEX ixfk__meme_fact__child ON "meme_fact" (child_id ASC);
 
 CREATE INDEX ixfk__meme_fact__tag ON "meme_fact" (tag_id ASC);
-
