@@ -15,11 +15,13 @@ sys.path.append('/opt/airflow/dags/util/kym_cleaning')
 sys.path.append('/opt/airflow/dags/util/kym_spotlight_cleaning')
 sys.path.append('/opt/airflow/dags/util/kym_vision_cleaning')
 sys.path.append('/opt/airflow/dags/util/sql_ingestion_query')
+sys.path.append('/opt/airflow/dags/util/mongodb_analysis')
 
 import util.kym_cleaning as kc
 import util.kym_spotlight_cleaning as ksc
 import util.kym_vision_cleaning as kvc
 import util.sql_ingestion_query as sql_ingest
+import util.mongodb_analysis as mongodb_analysis
 
 default_args_dict = {
     'start_date': datetime.datetime.now(),
@@ -57,11 +59,7 @@ def _enrichment():
     df_all[['DBPedia_resources_n']] = df_all[['DBPedia_resources_n']].fillna(value=0)
     df_all[['DBPedia_resources_n']] = df_all[['DBPedia_resources_n']].astype('int')
 
-    df_all.to_json('/opt/airflow/dags/data/kym_vs.json')
-
-
-def _prepare_sql_query():
-    df = pd.read_json('/opt/airflow/dags/data/kym_vs.json', encoding='utf-8')
+    df_all.to_json('/opt/airflow/dags/data/kym_vs.json', orient='records')
 
 
 def _persisit_mongodb_data():
@@ -79,7 +77,7 @@ def _persisit_mongodb_data():
     collection = db.create_collection(collection_name)
 
     with open('/opt/airflow/dags/data/kym_vs.json') as f:
-        kym_json = pd.read_json(f)
+        kym_json = json.load(f)
 
     collection.insert_many(kym_json)
 
@@ -198,6 +196,15 @@ insert_data_to_mongodb = PythonOperator(
     depends_on_past=False,
 )
 
+run_mongodb_analysis = PythonOperator(
+    task_id='run_mongodb_analysis',
+    dag=project_dag,
+    python_callable=mongodb_analysis.run_mongodb_analysis,
+    op_kwargs={},
+    trigger_rule='all_success',
+    depends_on_past=False,
+    )
+
 
 # #-------------------------------------------
 # def _analysis_sql():
@@ -259,3 +266,5 @@ download_kym_vision >> clean_kym_vision
 enrichment >> [prepare_sql_ingestion_query, insert_data_to_mongodb]
 
 prepare_sql_ingestion_query >> insert_data_to_sql_db
+
+insert_data_to_mongodb >> run_mongodb_analysis

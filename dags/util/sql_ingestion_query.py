@@ -117,4 +117,3 @@ def generate_sql_ingestion_query():
                              f'{origin_id}, {keyword_id}, {child_id}, {tag_id});\n')
 
             fw.write('\n')
-
