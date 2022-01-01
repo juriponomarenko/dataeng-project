@@ -95,7 +95,6 @@ def generate_sql_ingestion_query():
                             'search_keywords': 'text'
                         }
 
-
                         fw.write(f'INSERT INTO "{tables[k]}" ("id", "{cols[k]}") VALUES ({id}, \'{e}\');\n')
 
                     meme = meme_base.copy()
