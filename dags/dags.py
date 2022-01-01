@@ -246,6 +246,21 @@ analysis_sql = PythonOperator(
 #    depends_on_past=False,
 )        
 
+ingestion_mongo = BashOperator(
+    task_id='ingestion_mongo',
+    dag=project_dag,
+    bash_command='python /opt/airflow/dags/project/mongodb.py',
+    trigger_rule='all_success',
+    depends_on_past=False,
+    )
+
+analysis_mongo = BashOperator(
+    task_id='analysis_mongo',
+    dag=project_dag,
+    bash_command='python /opt/airflow/dags/project/mongodb_analysis.py',
+    trigger_rule='all_success',
+    depends_on_past=False,
+    )
 
 end = DummyOperator(
     task_id='end',
@@ -269,3 +284,5 @@ download_kym_vision >> clean_kym_vision
 [clean_kym_spotlight, clean_kym,clean_kym_vision] >> enrichment >> ingestion_query >> ingestion_sql
 
 ingestion_sql >> analysis_sql
+
+enrichment>>ingestion_mongo>>analysis_mongo
