@@ -66,7 +66,7 @@ def run_sql_analysis():
     """)
 
     df_parents_with_most_spoofy_memes = hook.get_pandas_df("""
-        SELECT pd.parent_link, mf.url, mf.title, count(mf) memes_count FROM (
+        SELECT pd.parent_link, count(mf) memes_count FROM (
             SELECT DISTINCT 
                 title, url, parent_id 
             FROM 

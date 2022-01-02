@@ -17,6 +17,7 @@ sys.path.append('/opt/airflow/dags/util/kym_vision_cleaning')
 sys.path.append('/opt/airflow/dags/util/sql_ingestion_query')
 sys.path.append('/opt/airflow/dags/util/mongodb_analysis')
 sys.path.append('/opt/airflow/dags/util/sql_analysis')
+sys.path.append('/opt/airflow/dags/util/machine_learning')
 
 import util.kym_cleaning as kc
 import util.kym_spotlight_cleaning as ksc
@@ -24,6 +25,7 @@ import util.kym_vision_cleaning as kvc
 import util.sql_ingestion_query as sql_ingest
 import util.mongodb_analysis as mongodb_analysis
 import util.sql_analysis as sql_analysis
+import util.machine_learning as ml_analysis
 
 default_args_dict = {
     'start_date': datetime.datetime.now(),
@@ -44,9 +46,9 @@ project_dag = DAG(
 def _connection_check():
     try:
         request.urlopen('https://meme4.science')
-        return 'create_data_dir'
+        return 'connection_ok'
     except:
-        return 'end'
+        return 'connection_fails'
 
 
 def _enrichment():
@@ -84,15 +86,47 @@ def _persisit_mongodb_data():
     collection.insert_many(kym_json)
 
 
-connection = BranchPythonOperator(
-    task_id='connection',
+def _report_fail():
+    with open("/opt/airflow/dags/data/.dag_output_report.txt", "w") as f:
+        f.write(
+            "DAG progress output:\n" 
+            "internet connection failed\n"
+        )
+        f.close()
+
+
+def _report_success():
+    with open("/opt/airflow/dags/data/.dag_output_report.txt", "w") as f:
+        f.write(
+            "DAG progress output:\n" 
+            "SQL analysis succeeded and its output is sql_analysis_*.json\n"
+            "Pymongo analysis succeeded and its output is mongo_analysis_result.json \n"
+            "ML analysis succeeded and its output is ml_analysis_result_kym_vs2.json\n"
+        )
+        f.close()
+
+
+connection_check = BranchPythonOperator(
+    task_id='connection_check',
     dag=project_dag,
     python_callable=_connection_check,
-    op_kwargs={
-    },
-#    trigger_rule='all_success',
+    op_kwargs={},
+    trigger_rule='all_success',
 )
 
+connection_fails = DummyOperator(
+    task_id='connection_fails',
+    dag=project_dag,
+    trigger_rule='all_success',
+    depends_on_past=False,
+)
+
+connection_ok = DummyOperator(
+    task_id='connection_ok',
+    dag=project_dag,
+    trigger_rule='all_success',
+    depends_on_past=False
+)
 
 create_data_dir = BashOperator(
     task_id='create_data_dir',
@@ -216,16 +250,39 @@ run_sql_analysis = PythonOperator(
     depends_on_past=False,
 )
 
-end = DummyOperator(
-    task_id='end',
+run_machine_learning_analysis = PythonOperator(
+    task_id='run_machine_learning_analysis',
     dag=project_dag,
-    trigger_rule='none_failed'
+    python_callable=ml_analysis.run_ml_analysis,
+    op_kwargs={},
+    trigger_rule='all_success',
+    depends_on_past=False,
+)
+
+report_success = PythonOperator(
+    task_id='report_success',
+    dag=project_dag,
+    python_callable=_report_success,
+    op_kwargs={},
+    trigger_rule='all_success',
+    depends_on_past=False,
+)
+
+report_fail = PythonOperator(
+    task_id='report_fail',
+    dag=project_dag,
+    python_callable=_report_fail,
+    op_kwargs={},
+    trigger_rule='all_success',
+    depends_on_past=False,
 )
 
 
-connection >> [end, create_data_dir]
+create_data_dir >> connection_check >> [connection_ok, connection_fails]
 
-create_data_dir >> [download_kym_spotlight, download_kym, download_kym_vision, prepare_sql_schema]
+connection_fails >> report_fail
+
+connection_ok >> [download_kym_spotlight, download_kym, download_kym_vision, prepare_sql_schema]
 
 download_kym_spotlight >> clean_kym_spotlight
 
@@ -235,10 +292,12 @@ download_kym_vision >> clean_kym_vision
 
 [clean_kym_spotlight, clean_kym, clean_kym_vision, prepare_sql_schema] >> enrichment
 
-enrichment >> [prepare_sql_ingestion_query, insert_data_to_mongodb]
+enrichment >> [prepare_sql_ingestion_query, insert_data_to_mongodb, run_machine_learning_analysis]
 
 prepare_sql_ingestion_query >> insert_data_to_sql_db
 
 insert_data_to_mongodb >> run_mongodb_analysis
 
 insert_data_to_sql_db >> run_sql_analysis
+
+[run_mongodb_analysis, run_sql_analysis, run_machine_learning_analysis] >> report_success
