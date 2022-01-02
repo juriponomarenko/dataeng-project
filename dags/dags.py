@@ -216,45 +216,6 @@ run_sql_analysis = PythonOperator(
     depends_on_past=False,
 )
 
-
-# #-------------------------------------------
-# def _analysis_sql():
-# #	query = 'analysis_year_diff.sql'
-#     query1="WITH diff AS (SELECT EXTRACT(year FROM year_added)-EXTRACT(year FROM year) AS d FROM kym_vs WHERE year_added>'0001-01-01' AND year>'0001-01-01') SELECT COUNT(d) counts, d difference FROM diff GROUP BY d ORDER BY d;"
-#     query2="WITH years AS (SELECT EXTRACT(year FROM year) AS y FROM kym_vs WHERE year>'0001-01-01') SELECT COUNT(y) counts, y FROM years GROUP BY y ORDER BY counts DESC;"
-#     query3="SELECT title,children_n FROM kym_vs ORDER BY children_n DESC;"
-#     query4="SELECT parent,COUNT(siblings_n) counts FROM kym_vs GROUP BY parent ORDER BY counts DESC;"
-#     query5="SELECT COUNT(title) counts,origin FROM kym_vs GROUP BY origin ORDER BY counts DESC;"
-#     query6="WITH ad AS (SELECT title,parent, adult FROM kym_vs WHERE adult='likely' OR adult='possible') SELECT COUNT(title) counts, parent FROM ad GROUP BY parent ORDER BY counts DESC;"
-#     query7="WITH ad AS (SELECT title,origin,adult FROM kym_vs WHERE adult='likely' OR adult='possible') SELECT COUNT(title) counts, origin FROM ad GROUP BY origin ORDER BY counts DESC;"
-#     hook = PostgresHook(postgres_conn_id="postgres_default")
-#     df = hook.get_pandas_df(sql=query1)
-#     df.to_csv("/opt/airflow/dags/data/analysis_year_diff.csv", index=False)
-#     df = hook.get_pandas_df(sql=query2)
-#     df.to_csv("/opt/airflow/dags/data/analysis_year_breakthrough.csv", index=False)
-#     df = hook.get_pandas_df(sql=query3)
-#     df.to_csv("/opt/airflow/dags/data/analysis_most_children.csv", index=False)
-#     df = hook.get_pandas_df(sql=query4)
-#     df.to_csv("/opt/airflow/dags/data/analysis_most_children_via_siblings.csv", index=False)
-#     df = hook.get_pandas_df(sql=query5)
-#     df.to_csv("/opt/airflow/dags/data/analysis_most_popular_origin.csv", index=False)
-#     df = hook.get_pandas_df(sql=query6)
-#     df.to_csv("/opt/airflow/dags/data/analysis_most_adult_oriented_parent.csv", index=False)
-#     df = hook.get_pandas_df(sql=query7)
-#     df.to_csv("/opt/airflow/dags/data/analysis_most_productive_origin_for_adult_oriented_memes.csv", index=False)
-#
-#
-# analysis_sql = PythonOperator(
-#     task_id='analysis_sql',
-#     dag=project_dag,
-#     python_callable=_analysis_sql,
-#     op_kwargs={
-#     },
-#     trigger_rule='all_success',
-# #    depends_on_past=False,
-# )
-
-
 end = DummyOperator(
     task_id='end',
     dag=project_dag,

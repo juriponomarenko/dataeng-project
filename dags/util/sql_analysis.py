@@ -24,7 +24,7 @@ def run_sql_analysis():
         ) mf
         JOIN date_dim dd ON dd.id = mf.date_id
         GROUP BY dd.year
-        ORDER BY dd.year asc;
+        ORDER BY dd.year ASC;
     """)
 
     df_memes_distribution_by_month_name = hook.get_pandas_df("""
@@ -37,12 +37,14 @@ def run_sql_analysis():
         ) mf
         JOIN date_dim dd on dd.id = mf.date_id
         GROUP BY dd.month_name, dd.month_number
-        ORDER BY dd.month_number asc;
+        ORDER BY dd.month_number ASC;
     """)
 
     df_memes_distribution_by_origin = hook.get_pandas_df("""
         SELECT COUNT(*), origin FROM (
-            SELECT DISTINCT title, url, origin_id FROM meme_fact
+            SELECT DISTINCT 
+                title, url, origin_id 
+            FROM meme_fact
         ) mf
         JOIN origin_dim o ON o.id = mf.origin_id
         GROUP BY o.origin
@@ -64,7 +66,7 @@ def run_sql_analysis():
     """)
 
     df_parents_with_most_spoofy_memes = hook.get_pandas_df("""
-        SELECT pd.parent_link, count(mf) memes_count FROM (
+        SELECT pd.parent_link, mf.url, mf.title, count(mf) memes_count FROM (
             SELECT DISTINCT 
                 title, url, parent_id 
             FROM 
