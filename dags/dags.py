@@ -16,12 +16,14 @@ sys.path.append('/opt/airflow/dags/util/kym_spotlight_cleaning')
 sys.path.append('/opt/airflow/dags/util/kym_vision_cleaning')
 sys.path.append('/opt/airflow/dags/util/sql_ingestion_query')
 sys.path.append('/opt/airflow/dags/util/mongodb_analysis')
+sys.path.append('/opt/airflow/dags/util/sql_analysis')
 
 import util.kym_cleaning as kc
 import util.kym_spotlight_cleaning as ksc
 import util.kym_vision_cleaning as kvc
 import util.sql_ingestion_query as sql_ingest
 import util.mongodb_analysis as mongodb_analysis
+import util.sql_analysis as sql_analysis
 
 default_args_dict = {
     'start_date': datetime.datetime.now(),
@@ -161,7 +163,7 @@ prepare_sql_schema = PostgresOperator(
     task_id='prepare_sql_schema',
     dag=project_dag,
     postgres_conn_id='postgres_default',
-    sql='data/schema.sql',
+    sql='schema.sql',
     trigger_rule='all_success',
     autocommit=True,
     depends_on_past=False,
@@ -203,7 +205,16 @@ run_mongodb_analysis = PythonOperator(
     op_kwargs={},
     trigger_rule='all_success',
     depends_on_past=False,
-    )
+)
+
+run_sql_analysis = PythonOperator(
+    task_id='run_sql_analysis',
+    dag=project_dag,
+    python_callable=sql_analysis.run_sql_analysis,
+    op_kwargs={},
+    trigger_rule='all_success',
+    depends_on_past=False,
+)
 
 
 # #-------------------------------------------
@@ -268,3 +279,5 @@ enrichment >> [prepare_sql_ingestion_query, insert_data_to_mongodb]
 prepare_sql_ingestion_query >> insert_data_to_sql_db
 
 insert_data_to_mongodb >> run_mongodb_analysis
+
+insert_data_to_sql_db >> run_sql_analysis

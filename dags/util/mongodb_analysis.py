@@ -1,6 +1,7 @@
 from pymongo import MongoClient
 import pandas as pd
 
+
 def run_mongodb_analysis():
 
     # connect to collection
