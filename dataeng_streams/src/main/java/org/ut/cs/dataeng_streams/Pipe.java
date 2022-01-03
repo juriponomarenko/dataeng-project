@@ -14,17 +14,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 
-/**
- * In this example, we implement a simple LineSplit program using the high-level Streams DSL
- * that reads from a source topic "streams-plaintext-input", where the values of messages represent lines of text,
- * and writes the messages as-is into a sink topic "streams-pipe-output".
- */
 public class Pipe {
 
     private static final Logger LOG = LoggerFactory.getLogger(Pipe.class);
@@ -40,7 +34,7 @@ public class Pipe {
 
         //builder.stream("kym").to("kym-cleaned");
 
-        KStream<String,String> kymStream = builder.stream("kym");
+        KStream<String, String> kymStream = builder.stream("kym");
 //        kymStream.to("kym-cleaned");
         //TODO more filtering: remove duplicates(title, url, last_update_source)
         //TODO title from url
@@ -49,16 +43,15 @@ public class Pipe {
         //CLEANING
         KStream<String, String> filtered = kymStream.filter(new Cleaner());
 
-        KStream<String,String> mapped = filtered.mapValues(new Converter());
+        KStream<String, String> mapped = filtered.mapValues(new Converter());
 
         mapped.to("kym-cleaned");
-        //builder.stream("streams-plaintext-input").to("streams-pipe-output");
 
-        KStream<String,String> kymsStream = builder.stream("kyms");
+        KStream<String, String> kymsStream = builder.stream("kyms");
         //CLEANING
         KStream<String, String> kymsFiltered = kymsStream.filter(new KymsCleaner());
 
-        KStream<String,String> kymsMapped = kymsFiltered.mapValues(new KymsConverter());
+        KStream<String, String> kymsMapped = kymsFiltered.mapValues(new KymsConverter());
 
         kymsMapped.to("kyms-cleaned");
 
@@ -99,7 +92,7 @@ public class Pipe {
             try {
                 JSONObject jsonObject = new JSONObject(value);
                 return Objects.equals(jsonObject.getString("category"), "Meme");
-            } catch (Exception e){
+            } catch (Exception e) {
                 LOG.warn("Failed to parse element", e);
             }
             return false;
@@ -115,29 +108,30 @@ public class Pipe {
             try {
                 JSONObject jsonObject = new JSONObject(value);
                 return jsonObject.has("Resources");
-            } catch (Exception e){
+            } catch (Exception e) {
                 LOG.warn("Failed to parse element", e);
             }
             return false;
         }
     }
 
-    static class KymsConverter implements ValueMapper<String,String> {
+    static class KymsConverter implements ValueMapper<String, String> {
 
         @Override
         public String apply(String value) {
             JSONObject jsonObject = new JSONObject(value);
             JSONArray resourcesArr = jsonObject.optJSONArray("DBPedia_resources");
-            if(resourcesArr != null){
+            if (resourcesArr != null) {
                 jsonObject.put("DBPedia_resources_n", resourcesArr.length());
             }
             return jsonObject.toString();
         }
     }
 
-    static class Converter implements ValueMapper<String,String> {
+    static class Converter implements ValueMapper<String, String> {
 
         private static List<String> fields = Arrays.asList("title", "url", "year_added", "meta", "details", "tags", "parent", "siblings", "children", "search_keywords");
+
         @Override
         public String apply(String value) {
             JSONObject jsonObject = new JSONObject(value);
@@ -147,47 +141,47 @@ public class Pipe {
             return jsonObject.toString();
         }
 
-        private String getParsedDate(JSONObject jsonObject){
+        private String getParsedDate(JSONObject jsonObject) {
             String formattedDate = "0001-01-01";
             try {
                 long timeFromEpoch = jsonObject.optLong("added", -1);
-                if(timeFromEpoch > 0) {
+                if (timeFromEpoch > 0) {
                     Instant date = Instant.ofEpochMilli(timeFromEpoch);
                     formattedDate = date.atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ISO_LOCAL_DATE);
                     jsonObject.put("year_added", formattedDate);
                 }
-            } catch (Exception e){
+            } catch (Exception e) {
                 LOG.warn("failed to parse date in added field", e);
             }
             return formattedDate;
         }
 
-        private JSONObject aggregates(JSONObject jsonObject){
+        private JSONObject aggregates(JSONObject jsonObject) {
             JSONObject result = jsonObject;
             JSONArray tagsArr = jsonObject.optJSONArray("tags");
-            if(tagsArr != null){
+            if (tagsArr != null) {
                 result.put("tags_n", tagsArr.length());
             }
             JSONArray siblingsArr = jsonObject.optJSONArray("siblings");
-            if(siblingsArr != null){
+            if (siblingsArr != null) {
                 result.put("siblings_n", siblingsArr.length());
             }
             JSONArray childrenArr = jsonObject.optJSONArray("children");
-            if(childrenArr != null){
+            if (childrenArr != null) {
                 result.put("children_n", childrenArr.length());
             }
             JSONArray descriptionArr = jsonObject.optJSONArray("description");
-            if(descriptionArr != null){
+            if (descriptionArr != null) {
                 result.put("description_n", descriptionArr.length());
             }
             return result;
         }
 
-        private JSONObject project(JSONObject jsonObject){
+        private JSONObject project(JSONObject jsonObject) {
             JSONObject projected = new JSONObject();
             Map<String, Object> mapped = jsonObject.toMap();
-            for(Map.Entry<String, Object> entry : mapped.entrySet()){
-                if(fields.contains(entry.getKey())){
+            for (Map.Entry<String, Object> entry : mapped.entrySet()) {
+                if (fields.contains(entry.getKey())) {
                     projected.put(entry.getKey(), entry.getValue());
                 }
             }
