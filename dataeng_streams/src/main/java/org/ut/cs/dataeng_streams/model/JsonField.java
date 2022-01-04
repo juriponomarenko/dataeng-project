@@ -21,6 +21,8 @@ public enum JsonField {
     ADDED,
     DESCRIPTION,
     DESCRIPTION_N,
+    ORIGIN,
+    YEAR,
     ;
 
     private String value;

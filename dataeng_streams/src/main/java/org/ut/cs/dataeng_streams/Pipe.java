@@ -34,7 +34,6 @@ public class Pipe {
 //        kymStream.to("kym-cleaned");
         //TODO more filtering: remove duplicates(title, url, last_update_source)
         //TODO title from url
-        //TODO get origin and year from details
 
         final Topology topology = builder.build();
 

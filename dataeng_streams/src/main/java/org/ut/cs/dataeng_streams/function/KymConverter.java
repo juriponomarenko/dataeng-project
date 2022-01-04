@@ -39,14 +39,15 @@ public class KymConverter implements ValueMapper<String, String> {
         jsonObject = addYear(jsonObject);
         jsonObject = project(jsonObject);
         jsonObject = putDescriptionFromMetaToRoot(jsonObject);
+        jsonObject = putOriginFromDetailsToRoot(jsonObject);
+        jsonObject = putYearFromDetailsToRoot(jsonObject);
         jsonObject = aggregates(jsonObject);
         return jsonObject.toString();
     }
 
     private JSONObject addYear(JSONObject jsonObject) {
-        JSONObject result = jsonObject;
-        result.put(JsonField.YEAR_ADDED.getValue(), getParsedDate(result));
-        return result;
+        jsonObject.put(JsonField.YEAR_ADDED.getValue(), getParsedDate(jsonObject));
+        return jsonObject;
     }
 
     private String getParsedDate(JSONObject jsonObject) {
@@ -65,22 +66,20 @@ public class KymConverter implements ValueMapper<String, String> {
     }
 
     private JSONObject aggregates(JSONObject jsonObject) {
-        JSONObject result = jsonObject;
-        result = countAndPutArrayElements(JsonField.TAGS, JsonField.TAGS_N, result);
-        result = countAndPutArrayElements(JsonField.SIBLINGS, JsonField.SIBLINGS_N, result);
-        result = countAndPutArrayElements(JsonField.CHILDREN, JsonField.CHILDREN_N, result);
-        result = countAndPutArrayElements(JsonField.DESCRIPTION, JsonField.DESCRIPTION_N, result);
+        jsonObject = countAndPutArrayElements(JsonField.TAGS, JsonField.TAGS_N, jsonObject);
+        jsonObject = countAndPutArrayElements(JsonField.SIBLINGS, JsonField.SIBLINGS_N, jsonObject);
+        jsonObject = countAndPutArrayElements(JsonField.CHILDREN, JsonField.CHILDREN_N, jsonObject);
+        jsonObject = countAndPutArrayElements(JsonField.DESCRIPTION, JsonField.DESCRIPTION_N, jsonObject);
 
-        return result;
+        return jsonObject;
     }
 
     private JSONObject countAndPutArrayElements(JsonField sourceFieldName, JsonField targetFieldName, JSONObject jsonObject) {
-        JSONObject result = jsonObject;
         JSONArray jsonArray = jsonObject.optJSONArray(sourceFieldName.getValue());
         if (jsonArray != null) {
-            result.put(targetFieldName.getValue(), jsonArray.length());
+            jsonObject.put(targetFieldName.getValue(), jsonArray.length());
         }
-        return result;
+        return jsonObject;
     }
 
     private JSONObject project(JSONObject jsonObject) {
@@ -95,9 +94,29 @@ public class KymConverter implements ValueMapper<String, String> {
     }
 
     private JSONObject putDescriptionFromMetaToRoot(JSONObject jsonObject) {
-        JSONObject result = jsonObject;
         JSONObject jsonMeta = jsonObject.getJSONObject(JsonField.META.getValue());
-        result.put(JsonField.DESCRIPTION.getValue(), jsonMeta.getString(JsonField.DESCRIPTION.getValue()));
-        return result;
+        jsonObject.put(JsonField.DESCRIPTION.getValue(), jsonMeta.getString(JsonField.DESCRIPTION.getValue()));
+        return jsonObject;
+    }
+
+    private JSONObject putOriginFromDetailsToRoot(JSONObject jsonObject) {
+        JSONObject jsonDetails = jsonObject.optJSONObject(JsonField.DETAILS.getValue());
+        if (jsonDetails != null) {
+            String origin = jsonDetails.optString(JsonField.ORIGIN.getValue());
+            if (origin != null) {
+                jsonObject.put(JsonField.ORIGIN.getValue(), origin.toLowerCase());
+            } else {
+                jsonObject.put(JsonField.ORIGIN.getValue(), JSONObject.NULL);
+            }
+        }
+        return jsonObject;
+    }
+
+    private JSONObject putYearFromDetailsToRoot(JSONObject jsonObject) {
+        JSONObject jsonDetails = jsonObject.optJSONObject(JsonField.DETAILS.getValue());
+        if (jsonDetails != null) {
+            jsonObject.put(JsonField.YEAR.getValue(), jsonDetails.optString(JsonField.YEAR.getValue(), DEFAULT_DATE));
+        }
+        return jsonObject;
     }
 }
