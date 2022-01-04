@@ -1,4 +1,4 @@
-package org.ut.cs.dataeng_streams.connector.kyms;
+package org.ut.cs.dataeng_streams.connector.spotlight;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.connect.data.Schema;
@@ -17,18 +17,18 @@ import java.net.URL;
 import java.util.*;
 
 
-public class KymsHTTPSourceTask extends SourceTask {
+public class HTTPSourceTask extends SourceTask {
 
-    private static Logger log = LoggerFactory.getLogger(KymsHTTPSourceTask.class);
+    private static Logger log = LoggerFactory.getLogger(HTTPSourceTask.class);
 
-    private KymsHTTPConnectorConfig config;
+    private HTTPConnectorConfig config;
     private int monitorThreadTimeout;
     private BufferedReader bufferedReader;
     private volatile int counter = 0;
     private final int limit = 2;
     private volatile long mingiCounter = 0;
 
-    public KymsHTTPSourceTask() {
+    public HTTPSourceTask() {
     }
 
     @Override
@@ -38,11 +38,11 @@ public class KymsHTTPSourceTask extends SourceTask {
 
     @Override
     public void start(Map<String, String> properties) {
-        config = new KymsHTTPConnectorConfig(properties);
-        monitorThreadTimeout = config.getInt(KymsHTTPConnectorConfig.MONITOR_THREAD_TIMEOUT_CONFIG);
+        config = new HTTPConnectorConfig(properties);
+        monitorThreadTimeout = config.getInt(HTTPConnectorConfig.MONITOR_THREAD_TIMEOUT_CONFIG);
         try {
 
-            URL url = new URL(config.getString(KymsHTTPConnectorConfig.FILE_URL_PARAM_CONFIG));
+            URL url = new URL(config.getString(HTTPConnectorConfig.FILE_URL_PARAM_CONFIG));
             HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
             urlConnection.setRequestMethod("GET");
             InputStream inputStream = urlConnection.getInputStream();
@@ -72,9 +72,9 @@ public class KymsHTTPSourceTask extends SourceTask {
                         String valuePart = elems[1];
                         valuePart = StringUtils.strip(valuePart, "\" :");
                         records.add(new SourceRecord(
-                                Collections.singletonMap("file", config.getString(KymsHTTPConnectorConfig.FILE_URL_PARAM_CONFIG)),
+                                Collections.singletonMap("file", config.getString(HTTPConnectorConfig.FILE_URL_PARAM_CONFIG)),
                                 Collections.singletonMap("offset", 0),
-                                config.getString(KymsHTTPConnectorConfig.KAFKA_TOPIC_CONFIG), null, null, key.getBytes(),
+                                config.getString(HTTPConnectorConfig.KAFKA_TOPIC_CONFIG), null, null, key.getBytes(),
                                 Schema.BYTES_SCHEMA,
                                 valuePart.getBytes()));
                     }

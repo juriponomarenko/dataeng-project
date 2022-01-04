@@ -1,4 +1,4 @@
-package org.ut.cs.dataeng_streams.connector.kyms;
+package org.ut.cs.dataeng_streams.connector.kym;
 
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.connect.connector.Task;
@@ -12,14 +12,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.ut.cs.dataeng_streams.connector.kym.KymHTTPConnectorConfig.CONFIG_DEF;
+import static org.ut.cs.dataeng_streams.connector.kym.HTTPConnectorConfig.CONFIG_DEF;
 
-public class KymsHTTPConnector extends SourceConnector {
+public class HTTPConnector extends SourceConnector {
 
-    private final Logger log = LoggerFactory.getLogger(KymsHTTPConnector.class);
+    private final Logger log = LoggerFactory.getLogger(HTTPConnector.class);
 
     private Map<String, String> originalProps;
-    private KymsHTTPConnectorConfig config;
+    private HTTPConnectorConfig config;
 
 
     @Override
@@ -34,12 +34,12 @@ public class KymsHTTPConnector extends SourceConnector {
 
     @Override
     public Class<? extends Task> taskClass() {
-        return KymsHTTPSourceTask.class;
+        return HTTPSourceTask.class;
     }
 
     @Override
     public void start(Map<String, String> originalProps) {
-        this.config = new KymsHTTPConnectorConfig(originalProps);
+        this.config = new HTTPConnectorConfig(originalProps);
         this.originalProps = originalProps;
     }
 

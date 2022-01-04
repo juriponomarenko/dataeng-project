@@ -47,13 +47,13 @@ public class Pipe {
 
         mapped.to("kym-cleaned");
 
-        KStream<String, String> kymsStream = builder.stream("kyms");
+        KStream<String, String> spotlightStream = builder.stream("spotlight");
         //CLEANING
-        KStream<String, String> kymsFiltered = kymsStream.filter(new KymsCleaner());
+        KStream<String, String> spotlightFiltered = spotlightStream.filter(new SpotlightCleaner());
 
-        KStream<String, String> kymsMapped = kymsFiltered.mapValues(new KymsConverter());
+        KStream<String, String> spotlightMapped = spotlightFiltered.mapValues(new SpotlightConverter());
 
-        kymsMapped.to("kyms-cleaned");
+        spotlightMapped.to("spotlight-cleaned");
 
         final Topology topology = builder.build();
 
@@ -99,12 +99,12 @@ public class Pipe {
         }
     }
 
-    static class KymsCleaner implements Predicate<String, String> {
+    static class SpotlightCleaner implements Predicate<String, String> {
 
         @Override
         public boolean test(String key, String value) {
-            LOG.info("parsing_key:" + key);
-            LOG.info("parsing_value:" + value);
+            //LOG.info("parsing_key:" + key);
+            //LOG.info("parsing_value:" + value);
             try {
                 JSONObject jsonObject = new JSONObject(value);
                 return jsonObject.has("Resources");
@@ -115,7 +115,7 @@ public class Pipe {
         }
     }
 
-    static class KymsConverter implements ValueMapper<String, String> {
+    static class SpotlightConverter implements ValueMapper<String, String> {
 
         @Override
         public String apply(String value) {

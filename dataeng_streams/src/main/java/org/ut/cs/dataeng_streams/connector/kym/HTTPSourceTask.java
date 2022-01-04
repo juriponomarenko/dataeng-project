@@ -19,18 +19,18 @@ import java.util.List;
 import java.util.Map;
 
 
-public class KymHTTPSourceTask extends SourceTask {
+public class HTTPSourceTask extends SourceTask {
 
-    private static Logger log = LoggerFactory.getLogger(KymHTTPSourceTask.class);
+    private static Logger log = LoggerFactory.getLogger(HTTPSourceTask.class);
 
-    private KymHTTPConnectorConfig config;
+    private HTTPConnectorConfig config;
     private int monitorThreadTimeout;
     private BufferedReader bufferedReader;
     private volatile int counter = 0;
     private final int limit = 2;
     private volatile long mingiCounter = 0;
 
-    public KymHTTPSourceTask() {
+    public HTTPSourceTask() {
     }
 
     @Override
@@ -40,11 +40,11 @@ public class KymHTTPSourceTask extends SourceTask {
 
     @Override
     public void start(Map<String, String> properties) {
-        config = new KymHTTPConnectorConfig(properties);
-        monitorThreadTimeout = config.getInt(KymHTTPConnectorConfig.MONITOR_THREAD_TIMEOUT_CONFIG);
+        config = new HTTPConnectorConfig(properties);
+        monitorThreadTimeout = config.getInt(HTTPConnectorConfig.MONITOR_THREAD_TIMEOUT_CONFIG);
         try {
 
-            URL url = new URL(config.getString(KymHTTPConnectorConfig.FILE_URL_PARAM_CONFIG));
+            URL url = new URL(config.getString(HTTPConnectorConfig.FILE_URL_PARAM_CONFIG));
             HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
             urlConnection.setRequestMethod("GET");
             InputStream inputStream = urlConnection.getInputStream();
@@ -68,9 +68,9 @@ public class KymHTTPSourceTask extends SourceTask {
                     //counter++;
                     mingiCounter++;
                     records.add(new SourceRecord(
-                            Collections.singletonMap("file", config.getString(KymHTTPConnectorConfig.FILE_URL_PARAM_CONFIG)),
+                            Collections.singletonMap("file", config.getString(HTTPConnectorConfig.FILE_URL_PARAM_CONFIG)),
                             Collections.singletonMap("offset", 0),
-                            config.getString(KymHTTPConnectorConfig.KAFKA_TOPIC_CONFIG), null, null, Long.valueOf(mingiCounter).toString().getBytes(),
+                            config.getString(HTTPConnectorConfig.KAFKA_TOPIC_CONFIG), null, null, Long.valueOf(mingiCounter).toString().getBytes(),
                             Schema.BYTES_SCHEMA,
                             value.getBytes()));
                 }

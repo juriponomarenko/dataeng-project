@@ -1,4 +1,4 @@
-package org.ut.cs.dataeng_streams.connector.kyms;
+package org.ut.cs.dataeng_streams.connector.spotlight;
 
 import org.apache.kafka.common.config.AbstractConfig;
 import org.apache.kafka.common.config.ConfigDef;
@@ -7,9 +7,9 @@ import org.apache.kafka.common.config.ConfigDef.Type;
 
 import java.util.Map;
 
-public class KymsHTTPConnectorConfig extends AbstractConfig {
+public class HTTPConnectorConfig extends AbstractConfig {
 
-    public KymsHTTPConnectorConfig(final Map<?, ?> originalProps) {
+    public HTTPConnectorConfig(final Map<?, ?> originalProps) {
         super(CONFIG_DEF, originalProps);
     }
 

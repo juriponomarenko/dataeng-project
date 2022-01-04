@@ -1,9 +1,9 @@
 {
-    "name": "http-kyms",
+    "name": "http-spotlight",
     "config": {
-        "connector.class": "org.ut.cs.dataeng_streams.connector.kyms.KymsHTTPConnector",
+        "connector.class": "org.ut.cs.dataeng_streams.connector.spotlight.HTTPConnector",
         "example.file.url": "https://owncloud.ut.ee/owncloud/index.php/s/iMM8crN4AKSpFZZ/download/kym_spotlight.json",
-        "example.kafka.topic": "kyms",
+        "example.kafka.topic": "spotlight",
         "monitor.thread.timeout": 1000,
         "tasks.max": "1"
     }

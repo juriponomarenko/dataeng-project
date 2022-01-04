@@ -7,9 +7,9 @@ import org.apache.kafka.common.config.ConfigDef.Type;
 
 import java.util.Map;
 
-public class KymHTTPConnectorConfig extends AbstractConfig {
+public class HTTPConnectorConfig extends AbstractConfig {
 
-    public KymHTTPConnectorConfig(final Map<?, ?> originalProps) {
+    public HTTPConnectorConfig(final Map<?, ?> originalProps) {
         super(CONFIG_DEF, originalProps);
     }
 
