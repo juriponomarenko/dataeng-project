@@ -5,7 +5,7 @@ import org.apache.kafka.connect.connector.Task;
 import org.apache.kafka.connect.source.SourceConnector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.ut.cs.dataeng_streams.PropertiesUtil;
+import org.ut.cs.dataeng_streams.util.PropertiesUtil;
 
 import java.util.ArrayList;
 import java.util.HashMap;

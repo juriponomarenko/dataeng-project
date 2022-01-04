@@ -5,18 +5,10 @@ import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
-import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.Predicate;
-import org.apache.kafka.streams.kstream.ValueMapper;
-import org.json.JSONArray;
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
 public class Pipe {
@@ -32,36 +24,33 @@ public class Pipe {
 
         final StreamsBuilder builder = new StreamsBuilder();
 
-        //builder.stream("kym").to("kym-cleaned");
+        new KymCleaner(builder).clean();
+        new SpotlightCleaner(builder).clean();
 
-        KStream<String, String> kymStream = builder.stream("kym");
+        //cleanKym(builder);
+        //cleanSpotlight(builder);
+
+//        KStream<String, String> kymStream = builder.stream(TopicName.KYM.getValue());
 //        kymStream.to("kym-cleaned");
         //TODO more filtering: remove duplicates(title, url, last_update_source)
         //TODO title from url
         //TODO get origin and year from details
 
-        //CLEANING
-        KStream<String, String> filtered = kymStream.filter(new Cleaner());
-
-        KStream<String, String> mapped = filtered.mapValues(new Converter());
-
-        mapped.to("kym-cleaned");
-
-        KStream<String, String> spotlightStream = builder.stream("spotlight");
-        //CLEANING
-        KStream<String, String> spotlightFiltered = spotlightStream.filter(new SpotlightCleaner());
-
-        KStream<String, String> spotlightMapped = spotlightFiltered.mapValues(new SpotlightConverter());
-
-        spotlightMapped.to("spotlight-cleaned");
-
         final Topology topology = builder.build();
 
-        System.out.println(topology.describe());
+        LOG.info(topology.describe().toString());
 
         final KafkaStreams streams = new KafkaStreams(topology, props);
         final CountDownLatch latch = new CountDownLatch(1);
 
+        addShutdownHook(streams, latch);
+
+        startStreamAndWaitOrExitOnFailure(streams, latch);
+
+        System.exit(0);
+    }
+
+    private static void addShutdownHook(KafkaStreams streams, CountDownLatch latch) {
         // attach shutdown handler to catch control-c
         Runtime.getRuntime().addShutdownHook(new Thread("streams-shutdown-hook") {
             @Override
@@ -70,122 +59,16 @@ public class Pipe {
                 latch.countDown();
             }
         });
+    }
 
+    private static void startStreamAndWaitOrExitOnFailure(KafkaStreams streams, CountDownLatch latch) {
         try {
-            System.out.println("starting");
             streams.start();
-            System.out.println("started");
             latch.await();
         } catch (Throwable e) {
-            System.out.println("failed." + e.getMessage());
-            e.printStackTrace();
+            LOG.error("Streams execution failed. exiting", e);
             System.exit(1);
         }
-        System.out.println("exiting");
-        System.exit(0);
     }
 
-    static class Cleaner implements Predicate<String, String> {
-
-        @Override
-        public boolean test(String key, String value) {
-            try {
-                JSONObject jsonObject = new JSONObject(value);
-                return Objects.equals(jsonObject.getString("category"), "Meme");
-            } catch (Exception e) {
-                LOG.warn("Failed to parse element", e);
-            }
-            return false;
-        }
-    }
-
-    static class SpotlightCleaner implements Predicate<String, String> {
-
-        @Override
-        public boolean test(String key, String value) {
-            //LOG.info("parsing_key:" + key);
-            //LOG.info("parsing_value:" + value);
-            try {
-                JSONObject jsonObject = new JSONObject(value);
-                return jsonObject.has("Resources");
-            } catch (Exception e) {
-                LOG.warn("Failed to parse element", e);
-            }
-            return false;
-        }
-    }
-
-    static class SpotlightConverter implements ValueMapper<String, String> {
-
-        @Override
-        public String apply(String value) {
-            JSONObject jsonObject = new JSONObject(value);
-            JSONArray resourcesArr = jsonObject.optJSONArray("DBPedia_resources");
-            if (resourcesArr != null) {
-                jsonObject.put("DBPedia_resources_n", resourcesArr.length());
-            }
-            return jsonObject.toString();
-        }
-    }
-
-    static class Converter implements ValueMapper<String, String> {
-
-        private static List<String> fields = Arrays.asList("title", "url", "year_added", "meta", "details", "tags", "parent", "siblings", "children", "search_keywords");
-
-        @Override
-        public String apply(String value) {
-            JSONObject jsonObject = new JSONObject(value);
-            jsonObject.put("year_added", getParsedDate(jsonObject));
-            jsonObject = project(jsonObject);
-            jsonObject = aggregates(jsonObject);
-            return jsonObject.toString();
-        }
-
-        private String getParsedDate(JSONObject jsonObject) {
-            String formattedDate = "0001-01-01";
-            try {
-                long timeFromEpoch = jsonObject.optLong("added", -1);
-                if (timeFromEpoch > 0) {
-                    Instant date = Instant.ofEpochMilli(timeFromEpoch);
-                    formattedDate = date.atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ISO_LOCAL_DATE);
-                    jsonObject.put("year_added", formattedDate);
-                }
-            } catch (Exception e) {
-                LOG.warn("failed to parse date in added field", e);
-            }
-            return formattedDate;
-        }
-
-        private JSONObject aggregates(JSONObject jsonObject) {
-            JSONObject result = jsonObject;
-            JSONArray tagsArr = jsonObject.optJSONArray("tags");
-            if (tagsArr != null) {
-                result.put("tags_n", tagsArr.length());
-            }
-            JSONArray siblingsArr = jsonObject.optJSONArray("siblings");
-            if (siblingsArr != null) {
-                result.put("siblings_n", siblingsArr.length());
-            }
-            JSONArray childrenArr = jsonObject.optJSONArray("children");
-            if (childrenArr != null) {
-                result.put("children_n", childrenArr.length());
-            }
-            JSONArray descriptionArr = jsonObject.optJSONArray("description");
-            if (descriptionArr != null) {
-                result.put("description_n", descriptionArr.length());
-            }
-            return result;
-        }
-
-        private JSONObject project(JSONObject jsonObject) {
-            JSONObject projected = new JSONObject();
-            Map<String, Object> mapped = jsonObject.toMap();
-            for (Map.Entry<String, Object> entry : mapped.entrySet()) {
-                if (fields.contains(entry.getKey())) {
-                    projected.put(entry.getKey(), entry.getValue());
-                }
-            }
-            return projected;
-        }
-    }
 }

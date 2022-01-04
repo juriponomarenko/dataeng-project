@@ -6,7 +6,7 @@ import org.apache.kafka.connect.source.SourceRecord;
 import org.apache.kafka.connect.source.SourceTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.ut.cs.dataeng_streams.PropertiesUtil;
+import org.ut.cs.dataeng_streams.util.PropertiesUtil;
 
 import java.io.BufferedReader;
 import java.io.IOException;
