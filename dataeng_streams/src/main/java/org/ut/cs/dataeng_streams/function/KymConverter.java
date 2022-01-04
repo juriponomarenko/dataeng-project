@@ -12,7 +12,6 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 public class KymConverter implements ValueMapper<String, String> {
 
@@ -20,18 +19,34 @@ public class KymConverter implements ValueMapper<String, String> {
 
     private static final String DEFAULT_DATE = "001-01-01";
 
-    private static List<String> fields = Arrays.asList(JsonField.TITLE.getValue(),
+    private static final List<String> FIELDS = Arrays.asList(JsonField.TITLE.getValue(),
             JsonField.URL.getValue(), JsonField.YEAR_ADDED.getValue(), JsonField.META.getValue(), JsonField.DETAILS.getValue(),
             JsonField.TAGS.getValue(), JsonField.PARENT.getValue(), JsonField.SIBLINGS.getValue(), JsonField.CHILDREN.getValue(),
             JsonField.SEARCH_KEYWORDS.getValue());
 
     @Override
     public String apply(String value) {
+        try {
+            return applyConversions(value);
+        } catch (Exception e) {
+            LOG.error("Failed to convert: " + value, e);
+        }
+        return value;
+    }
+
+    private String applyConversions(String value) {
         JSONObject jsonObject = new JSONObject(value);
-        jsonObject.put(JsonField.YEAR_ADDED.getValue(), getParsedDate(jsonObject));
+        jsonObject = addYear(jsonObject);
         jsonObject = project(jsonObject);
+        jsonObject = putDescriptionFromMetaToRoot(jsonObject);
         jsonObject = aggregates(jsonObject);
         return jsonObject.toString();
+    }
+
+    private JSONObject addYear(JSONObject jsonObject) {
+        JSONObject result = jsonObject;
+        result.put(JsonField.YEAR_ADDED.getValue(), getParsedDate(result));
+        return result;
     }
 
     private String getParsedDate(JSONObject jsonObject) {
@@ -70,20 +85,19 @@ public class KymConverter implements ValueMapper<String, String> {
 
     private JSONObject project(JSONObject jsonObject) {
         JSONObject projected = new JSONObject();
-        Map<String, Object> mapped = jsonObject.toMap();
-        for (Map.Entry<String, Object> entry : mapped.entrySet()) {
-            if (fields.contains(entry.getKey())) {
-                projected.put(entry.getKey(), entry.getValue());
+        for (String key : FIELDS) {
+            Object valueObject = jsonObject.opt(key);
+            if (valueObject != null) {
+                projected.put(key, valueObject);
             }
         }
         return projected;
     }
 
-    private void buildDescriptionFromMeta(JSONObject jsonObject){
-        JSONArray resultingArray = new JSONArray();
-        JSONArray jsonArray = jsonObject.optJSONArray(JsonField.META.getValue());
-        if(jsonArray != null){
-            resultingArray.put()
-        }
+    private JSONObject putDescriptionFromMetaToRoot(JSONObject jsonObject) {
+        JSONObject result = jsonObject;
+        JSONObject jsonMeta = jsonObject.getJSONObject(JsonField.META.getValue());
+        result.put(JsonField.DESCRIPTION.getValue(), jsonMeta.getString(JsonField.DESCRIPTION.getValue()));
+        return result;
     }
 }

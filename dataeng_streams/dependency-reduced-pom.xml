@@ -3,9 +3,9 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.ut.cs</groupId>
   <artifactId>dataeng_streams</artifactId>
-  <name>Kafka Streams Quickstart :: Java</name>
+  <name>Dataeng project streaming</name>
   <version>0.1</version>
-  <description>Kafka Connect Source Connector for dataeng project</description>
+  <description>Kafka streaming for dataeng project</description>
   <build>
     <pluginManagement>
       <plugins>

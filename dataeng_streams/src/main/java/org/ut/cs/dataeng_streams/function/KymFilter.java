@@ -18,9 +18,21 @@ public class KymFilter implements Predicate<String, String> {
     public boolean test(String key, String value) {
         try {
             JSONObject jsonObject = new JSONObject(value);
-            return Objects.equals(jsonObject.optString(JsonField.CATEGORY.getValue()), MEME_CATEGORY_VALUE);
+            return isCategoryMeme(jsonObject) && doesMetaDescriptionExist(jsonObject);
         } catch (Exception e) {
             LOG.warn("Failed to parse element", e);
+        }
+        return false;
+    }
+
+    private boolean isCategoryMeme(JSONObject jsonObject) {
+        return Objects.equals(jsonObject.optString(JsonField.CATEGORY.getValue()), MEME_CATEGORY_VALUE);
+    }
+
+    private boolean doesMetaDescriptionExist(JSONObject jsonObject) {
+        JSONObject metaJsonObject = jsonObject.optJSONObject(JsonField.META.getValue());
+        if (metaJsonObject != null) {
+            return metaJsonObject.has(JsonField.DESCRIPTION.getValue());
         }
         return false;
     }
