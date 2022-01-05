@@ -1,2 +1,4 @@
 .idea
-data
+data 
+logs/*
+neo4j
