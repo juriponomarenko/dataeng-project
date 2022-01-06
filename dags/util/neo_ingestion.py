@@ -6,7 +6,7 @@ def run_neo_ingestion():
     df=pd.read_json('/opt/airflow/dags/data/kym_vs.json')
     #database
 #    graph = Graph("neo4j://localhost:7687")
-    graph = Graph("bolt://neo:7687")
+    graph = Graph("bolt://neo:7687")  #neo is the name of the service in yaml
     #graph.delete_all()
     #fill database with data, takes time (>5min)
     #we use only meme titles and parent-child relations

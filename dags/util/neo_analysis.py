@@ -26,6 +26,8 @@ def run_neo_analysis():
     df_result.to_json("/opt/airflow/dags/data/neo_analysis_longest_path50.json",orient='records')
 
 # cypher code to see graph with longest path in neo UI in localhost
-#MATCH path=(n)-[:child*]->()
-#WHERE n.title='memes'
+#MATCH path=(m)-[:child*]->() 
+#WHERE m.title='memes'
 #RETURN path
+#ORDER BY length(path) desc
+#LIMIT 50
