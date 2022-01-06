@@ -1,6 +1,5 @@
-package org.ut.cs.dataeng_streams.connector.spotlight;
+package org.ut.cs.dataeng_streams.connector.vision;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.apache.kafka.connect.source.SourceTask;
@@ -14,7 +13,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 
 public class HTTPSourceTask extends SourceTask {
@@ -38,6 +40,7 @@ public class HTTPSourceTask extends SourceTask {
 
     @Override
     public void start(Map<String, String> properties) {
+        //TODO streaming JSON parser
         config = new HTTPConnectorConfig(properties);
         monitorThreadTimeout = config.getInt(HTTPConnectorConfig.MONITOR_THREAD_TIMEOUT_CONFIG);
         try {
@@ -64,22 +67,13 @@ public class HTTPSourceTask extends SourceTask {
             if ((value = bufferedReader.readLine()) != null && counter < limit) {
                 if(value.length() > 1) {
                     //counter++;
-//                    mingiCounter++;
-                    String[] elems = StringUtils.split(value, "\"", 2);
-                    if(elems.length == 2){
-                        String key = elems[0];
-                        key = StringUtils.strip(key, "\" :");
-                        String valuePart = elems[1];
-                        valuePart = StringUtils.strip(valuePart, "\" :");
-                        log.info("key=" + key + ", value=" + valuePart);
-                        records.add(new SourceRecord(
-                                Collections.singletonMap("file", config.getString(HTTPConnectorConfig.FILE_URL_PARAM_CONFIG)),
-                                Collections.singletonMap("offset", 0),
-                                config.getString(HTTPConnectorConfig.KAFKA_TOPIC_CONFIG), null, Schema.BYTES_SCHEMA, key.getBytes(),
-                                Schema.BYTES_SCHEMA,
-                                valuePart.getBytes()));
-                    }
-
+                    mingiCounter++;
+                    records.add(new SourceRecord(
+                            Collections.singletonMap("file", config.getString(HTTPConnectorConfig.FILE_URL_PARAM_CONFIG)),
+                            Collections.singletonMap("offset", 0),
+                            config.getString(HTTPConnectorConfig.KAFKA_TOPIC_CONFIG), null, null, Long.valueOf(mingiCounter).toString().getBytes(),
+                            Schema.BYTES_SCHEMA,
+                            value.getBytes()));
                 }
             }
         } catch (IOException e) {

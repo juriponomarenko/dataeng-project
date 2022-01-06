@@ -1,5 +1,8 @@
 package org.ut.cs.dataeng_streams.function;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.kafka.streams.KeyValue;
+import org.apache.kafka.streams.kstream.KeyValueMapper;
 import org.apache.kafka.streams.kstream.ValueMapper;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -13,7 +16,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 
-public class KymConverter implements ValueMapper<String, String> {
+public class KymConverter implements KeyValueMapper<String, String, KeyValue<String, String>> {
 
     private static final Logger LOG = LoggerFactory.getLogger(KymConverter.class);
 
@@ -25,24 +28,26 @@ public class KymConverter implements ValueMapper<String, String> {
             JsonField.SEARCH_KEYWORDS.getValue());
 
     @Override
-    public String apply(String value) {
-        try {
-            return applyConversions(value);
-        } catch (Exception e) {
-            LOG.error("Failed to convert: " + value, e);
-        }
-        return value;
+    public KeyValue<String,String> apply(String key, String value) {
+        //try {
+            return applyConversions(key, value);
+//        } catch (Exception e) {
+//            LOG.error("Failed to convert: " + value, e);
+//        }
+//        return value;
     }
 
-    private String applyConversions(String value) {
+    private KeyValue<String,String> applyConversions(String key, String value) {
         JSONObject jsonObject = new JSONObject(value);
         jsonObject = addYear(jsonObject);
         jsonObject = project(jsonObject);
         jsonObject = putDescriptionFromMetaToRoot(jsonObject);
         jsonObject = putOriginFromDetailsToRoot(jsonObject);
         jsonObject = putYearFromDetailsToRoot(jsonObject);
+        //jsonObject = overwriteTitleFromUrl(jsonObject);
+        String titleKey = constructTitleFromUrl(jsonObject, jsonObject.getString(JsonField.TITLE.getValue()));
         jsonObject = aggregates(jsonObject);
-        return jsonObject.toString();
+        return new KeyValue<>(titleKey, jsonObject.toString());
     }
 
     private JSONObject addYear(JSONObject jsonObject) {
@@ -118,5 +123,20 @@ public class KymConverter implements ValueMapper<String, String> {
             jsonObject.put(JsonField.YEAR.getValue(), jsonDetails.optString(JsonField.YEAR.getValue(), DEFAULT_DATE));
         }
         return jsonObject;
+    }
+
+    private JSONObject overwriteTitleFromUrl(JSONObject jsonObject) {
+        jsonObject.put(JsonField.TITLE.getValue(), constructTitleFromUrl(jsonObject, jsonObject.getString(JsonField.TITLE.getValue())));
+        return jsonObject;
+    }
+
+    private String constructTitleFromUrl(JSONObject jsonObject, String defaultValue) {
+        String result = defaultValue;
+        String url = jsonObject.getString(JsonField.URL.getValue());
+        String[] urlParts = StringUtils.splitByWholeSeparator(url, "memes/");
+        if (urlParts.length > 1) {
+            result = urlParts[1].replace("-", " ").toLowerCase();
+        }
+        return result;
     }
 }

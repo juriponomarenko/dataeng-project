@@ -30,16 +30,16 @@
           KAFKA_AUTO_CREATE_TOPICS_ENABLED: 'true'
           CONFLUENT_SUPPORT_CUSTOMER_ID: 'anonymous'
       db:
-        image: mysql:5.7.27
+        image: postgres:13
         hostname: db
         container_name: db
         ports:
-          - 3307:3306
+          - 5431:5432
         volumes:
           - ./migrations/schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
         environment:
-          - MYSQL_DATABASE=kafka_test
-          - MYSQL_ROOT_PASSWORD=admin
+          - POSTGRES_DB=dataeng_kym
+          - POSTGRES_PASSWORD=postgres
 
       connect:
         image: confluentinc/cp-kafka-connect:5.5.0

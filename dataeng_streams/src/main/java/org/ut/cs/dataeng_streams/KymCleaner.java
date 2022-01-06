@@ -27,6 +27,6 @@ public class KymCleaner {
     }
 
     private KStream<String, String> convertKym(KStream<String, String> stream) {
-        return stream.mapValues(new KymConverter());
+        return stream.map(new KymConverter());
     }
 }

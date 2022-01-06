@@ -23,6 +23,8 @@ public enum JsonField {
     DESCRIPTION_N,
     ORIGIN,
     YEAR,
+    SIMILARITY_SCORE("@similarityScore"),
+    URI("@URI"),
     ;
 
     private String value;

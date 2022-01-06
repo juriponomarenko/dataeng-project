@@ -27,6 +27,6 @@ public class SpotlightCleaner {
     }
 
     private KStream<String, String> convertSpotlight(KStream<String, String> stream) {
-        return stream.mapValues(new SpotlightConverter());
+        return stream.map(new SpotlightConverter());
     }
 }

@@ -5,6 +5,7 @@ public enum TopicName {
     SPOTLIGHT,
     KYM_CLEANED,
     SPOTLIGHT_CLEANED,
+    JOINED_STREAM,
     ;
 
     public String getValue(){

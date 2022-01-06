@@ -41,6 +41,12 @@ curl -X POST -H "Content-Type:application/json" -d @configs/spotlight-http-conne
 java -jar target/components/dataeng_streams-0.1.jar
 ```
 
+## Check messages
+Different topics: kym, spotlight, kym_cleaned, spotlight_cleaned
+```shell
+docker exec kafka kafka-console-consumer --topic spotlight --property print.key=true --from-beginning --bootstrap-server localhost:9092
+```
+
 ## Stop
 
 ```shell

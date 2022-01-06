@@ -1,0 +1,10 @@
+{
+    "name": "http-vision",
+    "config": {
+        "connector.class": "org.ut.cs.dataeng_streams.connector.vision.HTTPConnector",
+        "example.file.url": "https://owncloud.ut.ee/owncloud/index.php/s/teoFdWKBzzqcFjY/download/kym_vision.json",
+        "example.kafka.topic": "vision",
+        "monitor.thread.timeout": 1000,
+        "tasks.max": "1"
+    }
+}
