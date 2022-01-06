@@ -2,7 +2,7 @@ from py2neo import Graph
 import pandas as pd
 
 def run_neo_analysis():
-    graph = Graph("neo4j://localhost:7687")
+    graph = Graph("bolt://neo:7687")
     #children of meme 'hashtag'
     query='''
     MATCH (m)-[:child]->(n) 

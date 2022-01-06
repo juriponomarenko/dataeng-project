@@ -265,6 +265,7 @@ run_machine_learning_analysis = PythonOperator(
     depends_on_past=False,
 )
 
+#it takes time (about 40min)
 insert_data_to_neo = PythonOperator(
     task_id='insert_data_to_neo',
     dag=project_dag,
