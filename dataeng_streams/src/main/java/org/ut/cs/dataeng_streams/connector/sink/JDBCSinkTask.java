@@ -44,7 +44,12 @@ public class JDBCSinkTask extends SinkTask {
         try {
             connection = DriverManager.getConnection(config.getString(JDBCConnectorConfig.CONNECTION_URL_PARAM_CONFIG), "postgres", "postgres");
             preparedStatement = connection.prepareStatement("insert into meme_fact(title, url, description, children_count, tags_count, keywords_count, adult, " +
-                    "spoof, medical, racy, date_id, parent_id, origin_id, keyword_id, child_id, tag_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, (select id from date_dim where date = ?), ?, (select id from origin_dim where origin = ?), ?, ?, ?)");
+                    "spoof, medical, racy, date_id, parent_id, origin_id, keyword_id, child_id, tag_id) VALUES " +
+                    "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, " +
+                    "(select id from date_dim where date = ?), " +
+                    "?, " +
+                    "(select id from origin_dim where origin = ?), " +
+                    "?, ?, ?)");
             preparedDateStatement = connection.prepareStatement("insert into date_dim(date, month_number, month_name, year) values (?, ?, ?, ?) on conflict on constraint date_dim_date_key do nothing");
             preparedOriginStatement = connection.prepareStatement("insert into origin_dim(origin) values (?) on conflict on constraint origin_dim_origin_key do nothing");
 

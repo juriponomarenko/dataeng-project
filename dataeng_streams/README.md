@@ -33,14 +33,17 @@ docker-compose up -d
 
 ## Create connectors
 
+Source connector for Know you meme dataset
 ```shell
 curl -X POST -H "Content-Type:application/json" -d @configs/kym-http-connector-config.json http://localhost:8083/connectors
 ```
 
+Source connector for Spotlight dataset
 ```shell
 curl -X POST -H "Content-Type:application/json" -d @configs/spotlight-http-connector-config.json http://localhost:8083/connectors
 ```
 
+JDBC sink connector for Postgres DB
 ```shell
 curl -X POST -H "Content-Type:application/json" -d @configs/postgres-connector-config.json http://localhost:8083/connectors
 ```
