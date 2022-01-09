@@ -20,7 +20,7 @@ public class KymConverter implements KeyValueMapper<String, String, KeyValue<Str
 
     private static final Logger LOG = LoggerFactory.getLogger(KymConverter.class);
 
-    private static final String DEFAULT_DATE = "001-01-01";
+    public static final String DEFAULT_DATE = "0001-01-01";
 
     private static final List<String> FIELDS = Arrays.asList(JsonField.TITLE.getValue(),
             JsonField.URL.getValue(), JsonField.YEAR_ADDED.getValue(), JsonField.META.getValue(), JsonField.DETAILS.getValue(),

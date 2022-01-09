@@ -38,6 +38,7 @@
         volumes:
           - ./migrations/schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
         environment:
+          - POSTGRES_USER=postgres
           - POSTGRES_DB=dataeng_kym
           - POSTGRES_PASSWORD=postgres
 

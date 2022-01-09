@@ -3,7 +3,7 @@
     "config": {
         "connector.class": "org.ut.cs.dataeng_streams.connector.sink.JDBCPostgresSinkConnector",
         "topics": "joined_stream",
-        "connection.url": "jdbc:postgresql:localhost:5431/dataeng_kym",
+        "connection.url": "jdbc:postgresql://db:5432/dataeng_kym",
         "monitor.thread.timeout": 1000,
         "tasks.max": "1",
         "auto.create": false

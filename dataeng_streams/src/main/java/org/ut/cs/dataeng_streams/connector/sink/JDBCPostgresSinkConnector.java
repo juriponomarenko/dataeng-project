@@ -16,7 +16,7 @@ public class JDBCPostgresSinkConnector extends SinkConnector {
     private JDBCConnectorConfig config;
 
     @Override
-    public void start(Map<String, String> map) {
+    public void start(Map<String, String> originalProps) {
         this.config = new JDBCConnectorConfig(originalProps);
         this.originalProps = originalProps;
     }

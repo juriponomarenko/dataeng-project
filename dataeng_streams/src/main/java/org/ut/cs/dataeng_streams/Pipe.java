@@ -43,7 +43,6 @@ public class Pipe {
 //        KStream<String, String> kymStream = builder.stream(TopicName.KYM.getValue());
 //        kymStream.to("kym-cleaned");
         //TODO more filtering: remove duplicates(title, url, last_update_source)
-        //TODO title from url
 
         final Topology topology = builder.build();
 
@@ -67,7 +66,8 @@ public class Pipe {
         KTable<String, String> reducedTable = groupedStream.reduce((value1, value2) -> value2);
         //mappedStream.groupBy()
 
-        mappedStream.to(TopicName.KYM_CLEANED.getValue());
+        reducedTable.toStream().to(TopicName.KYM_CLEANED.getValue());
+        //groupedStream.to(TopicName.KYM_CLEANED.getValue());
 
 
         KStream<String,String> spotlightStream = builder.stream(TopicName.SPOTLIGHT.getValue());
@@ -76,7 +76,7 @@ public class Pipe {
         KGroupedStream<String,String> spotlightGroupedStream = spotlightMappedStream.groupByKey();
         KTable<String,String> spotlightReducedTable = spotlightGroupedStream.reduce(((value1, value2) -> value2));
 
-        KTable<String,String> joined = reducedTable.leftJoin(spotlightReducedTable, (value1, value2) -> "{\"v1\":" + value1 + ", \"v2\":" + value2 + "}");
+        KTable<String,String> joined = reducedTable.leftJoin(spotlightReducedTable, (value1, value2) -> "{\"kym\":" + value1 + ", \"spotlight\":" + value2 + "}");
 
 
         spotlightMappedStream.to(TopicName.SPOTLIGHT_CLEANED.getValue());
