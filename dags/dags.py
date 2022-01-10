@@ -15,9 +15,12 @@ sys.path.append('/opt/airflow/dags/util/kym_cleaning')
 sys.path.append('/opt/airflow/dags/util/kym_spotlight_cleaning')
 sys.path.append('/opt/airflow/dags/util/kym_vision_cleaning')
 sys.path.append('/opt/airflow/dags/util/sql_ingestion_query')
-sys.path.append('/opt/airflow/dags/util/mongodb_analysis')
 sys.path.append('/opt/airflow/dags/util/sql_analysis')
+sys.path.append('/opt/airflow/dags/util/mongodb_analysis')
 sys.path.append('/opt/airflow/dags/util/machine_learning')
+sys.path.append('/opt/airflow/dags/util/neo_ingestion')
+sys.path.append('/opt/airflow/dags/util/neo_analysis')
+
 
 import util.kym_cleaning as kc
 import util.kym_spotlight_cleaning as ksc
@@ -26,6 +29,8 @@ import util.sql_ingestion_query as sql_ingest
 import util.mongodb_analysis as mongodb_analysis
 import util.sql_analysis as sql_analysis
 import util.machine_learning as ml_analysis
+import util.neo_ingestion as neo_ingestion
+import util.neo_analysis as neo_analysis
 
 default_args_dict = {
     'start_date': datetime.datetime.now(),
@@ -102,6 +107,7 @@ def _report_success():
             "SQL analysis succeeded and its output is sql_analysis_*.json\n"
             "Pymongo analysis succeeded and its output is mongo_analysis_result.json \n"
             "ML analysis succeeded and its output is ml_analysis_result_kym_vs2.json\n"
+            "Neo4j analysis succeeded and its output is neo_analysis_*.json\n"
         )
         f.close()
 
@@ -259,6 +265,26 @@ run_machine_learning_analysis = PythonOperator(
     depends_on_past=False,
 )
 
+#it takes time (about 40min)
+insert_data_to_neo = PythonOperator(
+    task_id='insert_data_to_neo',
+    dag=project_dag,
+    python_callable=neo_ingestion.run_neo_ingestion,
+    op_kwargs={},
+    trigger_rule='all_success',
+    depends_on_past=False,
+)
+
+run_neo_analysis = PythonOperator(
+    task_id='run_neo_analysis',
+    dag=project_dag,
+    python_callable=neo_analysis.run_neo_analysis,
+    op_kwargs={},
+    trigger_rule='all_success',
+    depends_on_past=False,
+)
+
+
 report_success = PythonOperator(
     task_id='report_success',
     dag=project_dag,
@@ -292,12 +318,14 @@ download_kym_vision >> clean_kym_vision
 
 [clean_kym_spotlight, clean_kym, clean_kym_vision, prepare_sql_schema] >> enrichment
 
-enrichment >> [prepare_sql_ingestion_query, insert_data_to_mongodb, run_machine_learning_analysis]
+enrichment >> [prepare_sql_ingestion_query, insert_data_to_mongodb, run_machine_learning_analysis,insert_data_to_neo]
 
 prepare_sql_ingestion_query >> insert_data_to_sql_db
 
-insert_data_to_mongodb >> run_mongodb_analysis
-
 insert_data_to_sql_db >> run_sql_analysis
 
-[run_mongodb_analysis, run_sql_analysis, run_machine_learning_analysis] >> report_success
+insert_data_to_mongodb >> run_mongodb_analysis
+
+insert_data_to_neo >> run_neo_analysis
+
+[run_mongodb_analysis, run_sql_analysis, run_machine_learning_analysis, run_neo_analysis] >> report_success
