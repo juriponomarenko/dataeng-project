@@ -21,14 +21,11 @@ import java.util.Map;
 
 public class HTTPSourceTask extends SourceTask {
 
-    private static Logger log = LoggerFactory.getLogger(HTTPSourceTask.class);
+    private static final Logger LOG = LoggerFactory.getLogger(HTTPSourceTask.class);
 
     private HTTPConnectorConfig config;
     private int monitorThreadTimeout;
     private BufferedReader bufferedReader;
-    private volatile int counter = 0;
-    private final int limit = 2;
-    private volatile long mingiCounter = 0;
 
     public HTTPSourceTask() {
     }
@@ -49,7 +46,6 @@ public class HTTPSourceTask extends SourceTask {
             urlConnection.setRequestMethod("GET");
             InputStream inputStream = urlConnection.getInputStream();
             bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
-            //csvReader.readLine();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -62,15 +58,12 @@ public class HTTPSourceTask extends SourceTask {
 
         try {
             String value;
-
-            if ((value = bufferedReader.readLine()) != null && counter < limit) {
+            if ((value = bufferedReader.readLine()) != null) {
                 if(value.length() > 1) {
-                    //counter++;
-                    mingiCounter++;
                     records.add(new SourceRecord(
                             Collections.singletonMap("file", config.getString(HTTPConnectorConfig.FILE_URL_PARAM_CONFIG)),
                             Collections.singletonMap("offset", 0),
-                            config.getString(HTTPConnectorConfig.KAFKA_TOPIC_CONFIG), null, null, Long.valueOf(mingiCounter).toString().getBytes(),
+                            config.getString(HTTPConnectorConfig.KAFKA_TOPIC_CONFIG), null, null, null,
                             Schema.BYTES_SCHEMA,
                             value.getBytes()));
                 }

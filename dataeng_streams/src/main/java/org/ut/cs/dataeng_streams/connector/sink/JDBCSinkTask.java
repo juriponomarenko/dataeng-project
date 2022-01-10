@@ -74,7 +74,7 @@ public class JDBCSinkTask extends SinkTask {
                 String description = kymObject.optString(JsonField.DESCRIPTION.getValue());
                 int childrenCount = kymObject.optInt(JsonField.CHILDREN_N.getValue(), 0);
                 int tagsCount = kymObject.optInt(JsonField.TAGS_N.getValue(), 0);
-                int keywordsCount = 0; //TODO kymObject.optInt(JsonField.KEY)
+                int keywordsCount = 0;
                 String adult = null; //TODO
                 String spoof = null;
                 String medical = null;
@@ -114,8 +114,6 @@ public class JDBCSinkTask extends SinkTask {
                 preparedStatement.setNull(paramCounter++, Types.BIGINT);
 
                 int affected = preparedStatement.executeUpdate();
-                //Statement s = connection.createStatement();
-                //int affected = s.executeUpdate("insert into meme_fact(id, title, url, description, ) values(" + idProvider.incrementAndGet() + ", '" + title + "', 'abuu')");
                 LOG.info("Inserted " + affected);
             } catch (Exception e){
                 LOG.error("Failed to execute statement", e);

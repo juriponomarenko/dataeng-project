@@ -1,5 +1,10 @@
 package org.ut.cs.dataeng_streams.connector.vision;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.core.TreeNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.apache.kafka.connect.source.SourceTask;
@@ -21,14 +26,11 @@ import java.util.Map;
 
 public class HTTPSourceTask extends SourceTask {
 
-    private static Logger log = LoggerFactory.getLogger(HTTPSourceTask.class);
+    private static Logger LOG = LoggerFactory.getLogger(HTTPSourceTask.class);
 
     private HTTPConnectorConfig config;
     private int monitorThreadTimeout;
-    private BufferedReader bufferedReader;
-    private volatile int counter = 0;
-    private final int limit = 2;
-    private volatile long mingiCounter = 0;
+    private InputStream inputStream;
 
     public HTTPSourceTask() {
     }
@@ -48,9 +50,8 @@ public class HTTPSourceTask extends SourceTask {
             URL url = new URL(config.getString(HTTPConnectorConfig.FILE_URL_PARAM_CONFIG));
             HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
             urlConnection.setRequestMethod("GET");
-            InputStream inputStream = urlConnection.getInputStream();
-            bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
-            //csvReader.readLine();
+            inputStream = urlConnection.getInputStream();
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -61,31 +62,18 @@ public class HTTPSourceTask extends SourceTask {
         Thread.sleep(monitorThreadTimeout);
         List<SourceRecord> records = new ArrayList<>();
 
-        try {
-            String value;
-
-            if ((value = bufferedReader.readLine()) != null && counter < limit) {
-                if(value.length() > 1) {
-                    //counter++;
-                    mingiCounter++;
-                    records.add(new SourceRecord(
-                            Collections.singletonMap("file", config.getString(HTTPConnectorConfig.FILE_URL_PARAM_CONFIG)),
-                            Collections.singletonMap("offset", 0),
-                            config.getString(HTTPConnectorConfig.KAFKA_TOPIC_CONFIG), null, null, Long.valueOf(mingiCounter).toString().getBytes(),
-                            Schema.BYTES_SCHEMA,
-                            value.getBytes()));
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            //TODO
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
         return records;
     }
 
     @Override
     public void stop() {
         try {
-            bufferedReader.close();
+            inputStream.close();
         } catch (IOException e) {
             e.printStackTrace();
         }

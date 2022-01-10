@@ -32,7 +32,6 @@ public class SpotlightConverter implements KeyValueMapper<String, String, KeyVal
         if (resourcesArr != null) {
             jsonObject.put(JsonField.DBPEDIA_RESOURCES_N.getValue(), resourcesArr.length());
         }
-        //jsonObject = overwriteTitleFromUrl(jsonObject);
         jsonObject = project(jsonObject);
         KeyValue<String,String> kv = new KeyValue<>(title, jsonObject.toString());
         return kv;
@@ -61,11 +60,6 @@ public class SpotlightConverter implements KeyValueMapper<String, String, KeyVal
         jsonObject.put(JsonField.DBPEDIA_RESOURCES.getValue(), resources);
         return jsonObject;
     }
-
-//    private JSONObject overwriteTitleFromUrl(JSONObject jsonObject) {
-//        jsonObject.put(JsonField.TITLE.getValue(), constructTitleFromUrl(jsonObject, jsonObject.getString(JsonField.TITLE.getValue())));
-//        return jsonObject;
-//    }
 
     private String constructTitleFromUrl(String url) {
         String result = url;

@@ -24,9 +24,6 @@ public class HTTPSourceTask extends SourceTask {
     private HTTPConnectorConfig config;
     private int monitorThreadTimeout;
     private BufferedReader bufferedReader;
-    private volatile int counter = 0;
-    private final int limit = 2;
-    private volatile long mingiCounter = 0;
 
     public HTTPSourceTask() {
     }
@@ -47,7 +44,6 @@ public class HTTPSourceTask extends SourceTask {
             urlConnection.setRequestMethod("GET");
             InputStream inputStream = urlConnection.getInputStream();
             bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
-            //csvReader.readLine();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -61,10 +57,8 @@ public class HTTPSourceTask extends SourceTask {
         try {
             String value;
 
-            if ((value = bufferedReader.readLine()) != null && counter < limit) {
+            if ((value = bufferedReader.readLine()) != null) {
                 if(value.length() > 1) {
-                    //counter++;
-//                    mingiCounter++;
                     String[] elems = StringUtils.split(value, "\"", 2);
                     if(elems.length == 2){
                         String key = elems[0];

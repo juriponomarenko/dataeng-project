@@ -2,9 +2,12 @@
 
 ## Prerequisites
 
-Java 11\
-Maven\
-Docker\
+Java 11
+
+Maven
+
+Docker
+
 git
 
 ## Install
@@ -30,6 +33,9 @@ mvn clean package
 ```shell
 docker-compose up -d
 ```
+It might be necessary to include kafka in /etc/hosts file:
+
+127.0.0.1 kafka
 
 ## Create connectors
 
@@ -56,7 +62,7 @@ java -jar target/components/dataeng_streams-0.1.jar
 
 ## Check messages
 
-Different topics: kym, spotlight, kym_cleaned, spotlight_cleaned
+Different topics: kym, spotlight, joined_stream
 ```shell
 docker exec kafka kafka-console-consumer --topic spotlight --property print.key=true --from-beginning --bootstrap-server localhost:9092
 ```
