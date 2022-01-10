@@ -1,0 +1,10 @@
+{
+    "name": "http-kym",
+    "config": {
+        "connector.class": "org.ut.cs.dataeng_streams.connector.kym.HTTPConnector",
+        "example.file.url": "https://owncloud.ut.ee/owncloud/index.php/s/g4qB5DZrFEz2XLm/download/kym.json",
+        "example.kafka.topic": "kym",
+        "monitor.thread.timeout": 1000,
+        "tasks.max": "1"
+    }
+}
